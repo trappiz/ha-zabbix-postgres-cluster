@@ -1,0 +1,5 @@
+---
+# defaults file for barman
+barman_home: "/var/lib/barman"
+barman_conf_dir: "/etc/barman.d"
+

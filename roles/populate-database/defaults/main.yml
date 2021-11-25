@@ -1,0 +1,7 @@
+---
+# defaults file for populate-database
+
+zabbix_bootstrap_dir: "/home/{{ ansible_user }}/postgres"
+zabbix_schema: "{{ zabbix_bootstrap_dir }}/zabbix-schema.sql"
+timescaledb_setup: "{{ zabbix_bootstrap_dir }}/timescaledb.sql"
+timescaledb_activate_query: CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;

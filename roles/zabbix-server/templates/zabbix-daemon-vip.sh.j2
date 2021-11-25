@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+#set -o nounset
+
+ip addr show {{ zabbix_vip_interface }} | grep {{ zabbix_server_vip }} > /dev/null 2>&1
+
+if [[ $? -eq 0 ]]
+then
+	systemctl start zabbix-server.service
+else
+	systemctl stop zabbix-server.service
+fi

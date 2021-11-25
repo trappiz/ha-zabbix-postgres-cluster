@@ -1,0 +1,4 @@
+---
+# Config related to postgresql HA deployment
+is_master: 'false'
+postgresql_exists: 'true'

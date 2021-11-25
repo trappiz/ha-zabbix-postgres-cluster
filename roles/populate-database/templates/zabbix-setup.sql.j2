@@ -1,0 +1,3 @@
+CREATE DATABASE zabbix;
+CREATE USER zabbix WITH PASSWORD '{{ zabbix_pass }}' CREATEDB;
+GRANT ALL PRIVILEGES ON DATABASE zabbix TO zabbix;

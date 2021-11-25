@@ -1,0 +1,9 @@
+
+
+- name: Barman installation and configuration
+  hosts: barman:postgres_cluster:master
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - barman

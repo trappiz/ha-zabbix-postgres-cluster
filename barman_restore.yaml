@@ -1,0 +1,7 @@
+
+- hosts: postgres_cluster:barman
+  become: true
+  become_method: sudo
+  roles:
+    - update-upgrade
+    - barman-restore

@@ -1,0 +1,46 @@
+---
+# tasks file for postgres-lvm
+
+- name: Install parted
+  apt:
+    name: parted
+    state: present
+
+- name: Create a new primary partition with a size of "{{ partition_end }}" 
+  community.general.parted:
+    device: "{{ partition_disk }}"
+    number: "{{ partition_number }}"
+    state: present
+    part_end: "{{ partition_end }}"
+
+- name: Create Volume Group on top of "{{ physical_volumes }}"
+  community.general.lvg:
+    vg: "{{ volume_group }}"
+    pvs: "{{ physical_volumes }}"
+    pesize: "{{ physical_extent_size }}"
+    state: present
+
+- name: Create Logical Volume of "{{ logical_volume_size }}"mb
+  community.general.lvol:
+    vg: "{{ volume_group }}"
+    lv: "{{ logical_volume }}"
+    size: "{{ logical_volume_size }}"
+    pvs: "{{ physical_volumes }}"
+
+- name: Create a "{{ filesystem_type }}" filesystem on "{{ targeted_device }}"
+  filesystem:
+    fstype: "{{ filesystem_type }}"
+    dev: "{{ targeted_device }}"
+
+- name: Create dir "{{ mount_dir }}"
+  file:
+    name: "{{ mount_dir }}"
+    state: directory
+
+- name: Mount and bind a volume
+  ansible.posix.mount:
+    path: "{{ mount_dir }}"
+    src: "{{ device_source }}"
+    state: mounted
+    fstype: "{{ filesystem_type }}"
+

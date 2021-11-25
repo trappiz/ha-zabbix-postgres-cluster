@@ -1,0 +1,6 @@
+- name: Run update & upgrade on all servers
+  hosts: all
+  become: true
+  become_method: sudo
+  roles:
+    - update-upgrade

@@ -1,0 +1,17 @@
+- name: Update & upgrade and start dbus.service
+  import_playbook: update-upgrade.yaml
+
+- name: Boostrap PostgreSQL environment
+  import_playbook: bootstrap-psql.yaml
+
+- name: Deploy HA psql cluster
+  import_playbook: deploy_pgcluster.yml
+
+- name: Post configuration of PostgreSQL and pgbouncer
+  import_playbook: post-psql-config.yaml
+
+- name: Zabbix server installation
+  import_playbook: zabbix-server.yaml
+
+- name: Backup
+  import_playbook: backup-barman.yaml

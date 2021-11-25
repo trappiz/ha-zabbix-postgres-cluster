@@ -1,0 +1,19 @@
+---
+# defaults file for lvm
+
+partition_disk: "/dev/sdb"
+partition_number: "1"
+partition_end: "15GiB"
+
+physical_volumes: "{{ partition_disk }}{{ partition_number }}"
+physical_extent_size: "15000"
+
+volume_group: "psql-vg"
+
+logical_volume: "psql-lv"
+logical_volume_size: "15000"
+
+mount_dir: "/opt/data"
+filesystem_type: "ext4"
+targeted_device: "/dev/{{ volume_group }}/{{ logical_volume }}"
+device_source: "/dev/mapper/psql--vg-psql--lv"

@@ -1,0 +1,30 @@
+---
+# Postgres cluster virtual IP address
+postgres_cluster_vip: ""
+
+# User credentials
+zabbix_db_name: "zabbix"
+zabbix_db_user: "zabbix"
+zabbix_db_user_pass: "{{ vault_zabbix_db_user_pass }}" 
+backup_user: "barman"
+backup_user_pass: "{{ vault_backup_user_pass }}"
+
+# Ansible variables
+ansible_connection: 'ssh'
+ansible_ssh_port: '22'
+ansible_user: 'ubuntu'
+
+# "Check system" variables
+os_valid_distributions:
+  - RedHat
+  - CentOS
+  - OracleLinux
+  - Ubuntu
+  - Debian
+
+os_minimum_versions:
+  RedHat: 7
+  CentOS: 7
+  OracleLinux: 7
+  Ubuntu: 16.04
+  Debian: 9

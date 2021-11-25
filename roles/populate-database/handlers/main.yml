@@ -1,0 +1,7 @@
+---
+# handlers file for postgres
+
+- name: Clean up
+  file:
+    path: "{{ zabbix_bootstrap_dir }}"
+    state: absent

@@ -1,0 +1,30 @@
+---
+# tasks file for timescaled
+
+- name: Add timescale repository from PPA
+  apt_repository:
+    repo: ppa:timescale/timescaledb-ppa
+
+- name: Add postgres repository key
+  ansible.builtin.apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL repository
+  ansible.builtin.apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main
+    state: present
+
+- name: Update repo
+  apt:
+    update_cache: yes
+
+- name: Install PostreSQL-{{ postgresql_version }}
+  apt:
+    name: postgresql-{{ postgresql_version }}
+    state: present
+
+- name: Install Timescaledb v2 for PostgreSQL version:{{ postgresql_version }}
+  apt:
+    name: timescaledb-2-postgresql-{{ postgresql_version }}
+    state: present

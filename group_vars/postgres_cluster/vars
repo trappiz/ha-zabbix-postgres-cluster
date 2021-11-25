@@ -1,0 +1,31 @@
+
+# User credentials
+patroni_superuser_username: "postgres"
+patroni_superuser_password: "{{ vault_patroni_superuser_password }}"
+patroni_replication_username: "replicator"
+patroni_replication_password: "{{ vault_patroni_replication_password }}"
+
+# LVM variables
+#
+partition_disk: "/dev/sdb"
+partition_number: "1"
+partition_end: "15GiB" #Change this
+physical_volumes: "{{ partition_disk }}{{ partition_number }}"
+physical_extent_size: "4" #Change this
+logical_volume_size: "15000" #Change this
+logical_volume: "psql-lv"
+volume_group: "psql-vg"
+mount_dir: "/opt/data"
+filesystem_type: "ext4"
+targeted_device: "/dev/{{ volume_group }}/{{ logical_volume }}"
+device_source: "/dev/mapper/psql--vg-psql--lv"
+
+# Change postgres data directory variables
+postgresql_version: "13"
+old_psql_home_dir: "/var/lib/postgresql"
+new_psql_home_dir: "{{ mount_dir }}"
+psql_config_file: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
+psql_data_dir_path: "{{ new_psql_home_dir }}/postgresql/{{ postgresql_version }}/main/"
+
+# Backup server variables
+backup_ip: "{{ groups['barman'][0] }}"

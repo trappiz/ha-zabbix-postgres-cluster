@@ -1,0 +1,7 @@
+---
+# handlers file for pgbouncer-config
+- name: Restart pgbouncer service
+  service:
+    name: pgbouncer
+    state: restarted
+

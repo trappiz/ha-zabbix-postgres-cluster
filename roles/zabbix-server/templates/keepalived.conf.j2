@@ -1,0 +1,21 @@
+
+global_defs {
+	router_id ocp_vrrp
+	enable_script_security
+}
+
+vrrp_instance VI_1 {
+	state BACKUP
+	interface {{ ansible_default_ipv4.interface }}
+	virtual_router_id {{ zabbix_server_vip.split('.')[3] | int }}
+	priority 100
+	advert_int 1
+	authentication {
+		auth_type PASS
+		auth_pass {{ keepalived_auth_pass }}
+	}
+	virtual_ipaddress {
+		{{ zabbix_server_vip }}
+		}
+}
+

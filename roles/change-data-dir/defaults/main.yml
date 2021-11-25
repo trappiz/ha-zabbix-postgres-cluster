@@ -1,0 +1,6 @@
+---
+# defaults file for change-data-dir
+old_psql_home_dir: "/var/lib/postgresql "
+new_psql_home_dir: "{{ mount_dir }}"
+psql_config_file: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
+psql_data_dir_path: "{{ new_psql_home_dir }}/postgresql/{{ postgresql_version }}/main/"

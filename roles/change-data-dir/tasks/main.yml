@@ -1,0 +1,51 @@
+---
+# tasks file for change-data-dir
+
+- name: Register if the "{{ old_psql_home_dir }}/{{ postgresql_version }}" directory exists
+  stat:
+    path: "{{ old_psql_home_dir }}/{{ postgresql_version }}"
+  register: result
+
+- name: Stop postgres service
+  service:
+    name: postgresql
+    state: stopped
+  when: result.stat.exists
+
+- name: Copy postgres dir to new location
+  ansible.builtin.copy:
+    src: "{{ old_psql_home_dir }}"
+    dest: "{{ new_psql_home_dir }}" 
+    owner: postgres
+    group: postgres
+    mode: '0755'
+    remote_src: yes
+  when: result.stat.exists
+
+- name: Copy original folder with .old extension
+  ansible.builtin.copy:
+    src: "{{ old_psql_home_dir }}/{{ postgresql_version }}"
+    dest: "{{ old_psql_home_dir }}/{{ postgresql_version }}.old" 
+    owner: postgres
+    group: postgres
+    mode: '0755'
+    remote_src: yes
+  when: result.stat.exists
+
+- name: Remove original postgres home directory
+  file:
+    path: "{{ old_psql_home_dir }}/{{ postgresql_version }}"
+    state: absent
+  when: result.stat.exists
+
+- name: Change data_directory in postgresql.conf
+  ansible.builtin.lineinfile:
+    path: "{{ psql_config_file }}"
+    regexp: '^data_directory'
+    line: "data_directory = '{{ psql_data_dir_path }}'"
+
+- name: Start postgres service
+  service:
+    name: postgresql
+    state: restarted
+  when: result.stat.exists

@@ -1,0 +1,39 @@
+---
+# tasks file for populate-database
+
+- name: Create Postgres directory
+  file:
+    path: "{{ zabbix_bootstrap_dir }}"
+    state: directory
+
+- name: Copy zabbix schema to hosts
+  copy:
+    src: zabbix-schema.sql
+    dest: "{{ zabbix_schema }}" 
+  notify:
+    - Clean up
+
+- name: Copy timesqaledb.sql to hosts
+  copy:
+    src: timescaledb.sql
+    dest: "{{ timescaledb_setup }}"
+  notify:
+    - Clean up
+
+- name: Import zabbix schema into postgresql
+  community.general.postgresql_db:
+    name: "{{ zabbix_db_name }}"
+    state: restore
+    target: "{{ zabbix_schema }}"
+    login_user: "{{ zabbix_db_user }}"
+    login_password: "{{ zabbix_db_user_pass }}"
+    login_host: 127.0.0.1
+
+- name: Import timescale hypertable schema
+  community.general.postgresql_db:
+    name: "{{ zabbix_db_name }}"
+    state: restore
+    target: "{{ timescaledb_setup }}"
+    login_user: "{{ zabbix_db_user }}"
+    login_password: "{{ zabbix_db_user_pass }}"
+    login_host: 127.0.0.1

@@ -1,0 +1,75 @@
+---
+
+- name: Install keepalived on machine
+  apt:
+    name: keepalived
+    state: present
+
+- name: Copy keepalived.conf file to destination
+  template:
+    src: keepalived.conf.j2
+    dest: "{{ keepalived_dest }}/keepalived.conf"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy zabbix-daemon-vip.sh file to destination
+  template:
+    src: zabbix-daemon-vip.sh.j2
+    dest: "{{ keepalived_dest }}/zabbix-daemon-vip.sh"
+    owner: root
+    group: root
+    mode: 0744
+
+- name: Copy zabbix-vipd.service file to destination
+  template:
+    src: zabbix-vipd.service.j2
+    dest: "{{ zabbix_service_dest }}/zabbix-vipd.service"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy zabbix-vipd.timer file to destination
+  template:
+    src: zabbix-vipd.timer.j2
+    dest: "{{ zabbix_service_dest }}/zabbix-vipd.timer"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install Zabbix repository "{{ zabbix_deb }}"
+  apt:
+    deb: "{{ zabbix_deb }}"
+
+- name: Update repo
+  apt:
+    update_cache: yes
+
+- name: Install Zabbix-Server 5.0.16
+  apt:
+    name: zabbix-server-pgsql
+    state: present
+
+- name: Copy zabbix_server.conf to "{{ zabbix_server_conf_dest }}"
+  template:
+    src: zabbix_server.conf.j2
+    dest: "{{ zabbix_server_conf_dest }}/zabbix_server.conf"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Using zabbix-agent role
+  include_role: 
+    name: zabbix-agent
+
+- name: restart keepalived
+  service:
+    name: keepalived
+    state: restarted
+
+- name: Start zabbix-vipd.timer
+  systemd:
+    name: zabbix-vipd.timer
+    state: restarted
+    enabled: true
+    daemon_reload: yes

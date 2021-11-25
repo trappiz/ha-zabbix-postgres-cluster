@@ -1,0 +1,10 @@
+---
+# tasks file for pgbouncer-config
+- name: Add to "ignore_startup_parameters"
+  lineinfile:
+    path: /etc/pgbouncer/pgbouncer.ini
+    regexp: '{{ pgbouncer_startup_parameters_regex }}'
+    line: '{{ pgbouncer_startup_parameters }}'
+    backrefs: true
+  notify:
+    - Restart pgbouncer service

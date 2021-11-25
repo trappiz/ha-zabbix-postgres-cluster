@@ -1,0 +1,19 @@
+# Backup retention policy
+# https://docs.pgbarman.org/release/2.15/#retention-policies
+retention_policy: "RECOVERY WINDOW OF 1 WEEKS"
+
+# Full backup cron job
+full_cron_job: "/usr/bin/barman backup postgres_cluster"
+full_cron_minute: "0"
+full_cron_hour: "0"
+full_cron_day: "*"
+full_cron_month: "*"
+full_cron_weekday: "7"
+
+# Incremental backup cron job
+incremental_cron_job: "/usr/bin/barman backup --reuse-backup=link postgres_cluster"
+incremental_cron_minute: "0"
+incremental_cron_hour: "0"
+incremental_cron_day: "*"
+incremental_cron_month: "*"
+incremental_cron_weekday: "1-6"

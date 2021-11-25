@@ -1,0 +1,71 @@
+#---
+## tasks file for barman-restore
+#
+- name: Stop patroni on Replicas
+  service:
+    name: patroni
+    state: stopped
+  when: "'replica' in group_names" 
+
+- name: Pause
+  pause:
+    minutes: 1
+
+- name: Stop patroni on Master
+  service:
+    name: patroni
+    state: stopped
+  when: "'master' in group_names" 
+
+- name: Delete cluster from ETCD
+  command: etcdctl rm /service/postgres-cluster/ --recursive
+  when: "'master' in group_names" 
+
+- name: Stop PostgreSql on all servers
+  service:
+    name: postgresql
+    state: stopped
+  when: "'postgres_cluster' in group_names"
+
+- name: Delete postgres data directory
+  file:
+    path: /opt/data/postgresql/12/main
+    state: absent
+  when: "'postgres_cluster' in group_names"
+  
+- name: Restore from barman server 
+  become_user: barman
+  command: barman recover --remote-ssh-command "ssh postgres@{{ groups['master'][0] }}" postgres_cluster "{{ backup_id }}" /opt/data/postgresql/12/main
+  when: "'barman' in group_names" 
+
+- name: Start PostgreSql on master
+  service:
+    name: postgresql
+    state: started
+  when: "'master' in group_names"
+
+- name: Pause
+  pause:
+    minutes: 1
+
+- name: Stop PostgreSql on master
+  service:
+    name: postgresql
+    state: stopped
+  when: "'master' in group_names"
+
+- name: Start patroni on master
+  service:
+    name: patroni
+    state: started
+  when: "'master' in group_names"
+
+- name: Pause
+  pause:
+    minutes: 1
+
+- name: Start patroni on replicas
+  service:
+    name: patroni
+    state: started
+  when: "'replica' in group_names"

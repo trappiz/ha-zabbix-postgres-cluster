@@ -1,0 +1,7 @@
+[postgres_cluster]
+conninfo = host={{ postgres_cluster_vip }} port=5000 user={{ backup_user }} dbname={{ zabbix_db_name }}
+ssh_command = ssh postgres@{{ postgres_cluster_vip }} -q
+backup_method = rsync
+backup_options = concurrent_backup
+archiver = on
+retention_policy = {{ retention_policy }}

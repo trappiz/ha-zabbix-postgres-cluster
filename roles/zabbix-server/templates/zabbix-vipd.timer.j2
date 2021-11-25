@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer for zabbix-vipd.service
+
+[Timer]
+OnBootSec=10s
+OnUnitActiveSec=10s
+
+[Install]
+WantedBy=timers.target

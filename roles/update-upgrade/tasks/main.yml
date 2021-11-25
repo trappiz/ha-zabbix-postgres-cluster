@@ -1,0 +1,12 @@
+---
+# tasks file for update-upgrade
+- name: Update
+  apt:
+    update_cache: yes
+
+- name: Upgrade
+  apt:
+    upgrade: dist
+
+- name: Run dbus.socket and dbus.service starter script
+  script: start-dbus-daemons.sh

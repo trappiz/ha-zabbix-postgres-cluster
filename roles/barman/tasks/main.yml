@@ -1,0 +1,179 @@
+---
+# tasks file for barman
+- name: Give barman SUPERUSER
+  community.general.postgresql_user:
+    name: "{{ backup_user }}"
+    role_attr_flags: SUPERUSER
+  when: "'master' in group_names"
+
+- name: Intall Barman
+  apt:
+    name: barman
+    state: present
+  when: "'barman' in group_names"
+
+- name: Intall ACL to assist with UNIX file permissions
+  apt:
+    name: acl
+    state: present
+  when: "'barman' in group_names"
+
+- name: Generate SSH and give barman password
+  vars: 
+    barman_pass: "{{ backup_user_pass }}"
+  user:
+    name: barman
+    group: barman
+    update_password: always
+    password: "{{ barman_pass|password_hash('sha512') }}"
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+  when: "'barman' in group_names"
+
+- name: Create .pgpass file for barman user
+  template:
+    src: pgpass.j2
+    dest: "{{ barman_home }}/.pgpass"
+    owner: barman
+    group: barman
+    mode: 0600
+  when: "'barman' in group_names"
+
+- name: ssh_keys | Ensure ssh key are created for "postgres" user on database servers
+  user:
+    name: "postgres"
+    generate_ssh_key: true
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+  when: "'postgres_cluster' in group_names"
+
+- name: ssh_keys | Get public ssh key from barman server
+  slurp:
+    src: "~barman/.ssh/id_rsa.pub"
+  register: barman_sshkey
+  changed_when: false
+  when: "'barman' in group_names"
+
+- name: ssh_keys | Add barman ssh key in "~postgres/.ssh/authorized_keys" on database servers
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ hostvars[item].barman_sshkey['content'] | b64decode }}"
+  loop: "{{ groups['barman'] }}"
+  when: "'postgres_cluster' in group_names"
+
+- name: ssh_keys | Get public ssh key from postgres_cluster server
+  slurp:
+    src: "~postgres/.ssh/id_rsa.pub"
+  register: postgres_sshkey
+  changed_when: false
+  when: "'postgres_cluster' in group_names"
+
+- name: ssh_keys | Add postgres ssh key in "~barman/.ssh/authorized_keys" on barman server
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ hostvars[item].postgres_sshkey['content'] | b64decode }}"
+  loop: "{{ groups['postgres_cluster'] }}"
+  when: "'barman' in group_names"
+
+
+- name: known_hosts | Get public ssh keys of barman (ssh-keyscan)
+  command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ item }}"
+  loop: "{{ groups['barman'] }}"
+  register: ssh_known_barman_host_keyscan
+  changed_when: false
+
+- name: known_hosts | add ssh public keys in "~postgres/.ssh/known_hosts" on database servers
+  become: true
+  become_user: postgres
+  known_hosts:
+    host: "{{ item.item }}"
+    key: "{{ item.stdout }}"
+    path: "~postgres/.ssh/known_hosts"
+  no_log: true
+  loop: "{{ ssh_known_barman_host_keyscan.results }}"
+  when: "'postgres_cluster' in group_names"
+
+- name: known_hosts | Get public ssh keys of hosts (ssh-keyscan)
+  command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ item }}"
+  loop: "{{ groups['postgres_cluster'] }}"
+  register: ssh_known_host_keyscan
+  changed_when: false
+
+- name: known_hosts | add ssh public keys in "barman/.ssh/known_hosts" on barman server
+  become_user: barman
+  known_hosts:
+    host: "{{ item.item }}"
+    key: "{{ item.stdout }}"
+    path: "~barman/.ssh/known_hosts"
+  no_log: true
+  loop: "{{ ssh_known_host_keyscan.results }}"
+  when: "'barman' in group_names"
+
+- name: Copy postgres_cluster.conf
+  template:
+    src: postgres_cluster.conf.j2
+    dest: "{{ barman_conf_dir }}/postgres_cluster.conf"
+  when: "'barman' in group_names"
+
+- name: Create postgres_cluster directory
+  become_user: barman
+  file:
+    path: /var/lib/barman/postgres_cluster
+    state: directory
+  when: "'barman' in group_names"
+
+- name: Create postgres_cluster subdirectories
+  become_user: barman
+  file:
+    path: "/var/lib/barman/postgres_cluster/{{ item }}"
+    state: directory
+  loop:
+    - base
+    - errors
+    - incoming
+    - streaming
+    - wals
+  when: "'barman' in group_names"
+  
+- name: Verify wal archiving process
+  become_user: barman
+  command: barman switch-wal --force --archive postgres_cluster
+  when: "'barman' in group_names"
+
+- name: Run barman check
+  become_user: barman
+  command: barman check postgres_cluster
+  when: "'barman' in group_names"
+
+- name: Add full backup cron job
+  ansible.builtin.cron:
+    name: "Full backup"
+    user: barman
+    minute: "{{ full_cron_minute }}"
+    hour: "{{ full_cron_hour }}"
+    day: "{{ full_cron_day }}"
+    month: "{{ full_cron_month }}"
+    weekday: "{{ full_cron_weekday }}"
+    job: "{{ full_cron_job }}"
+  when: "'barman' in group_names"
+
+- name: Add incremental backup cron job
+  ansible.builtin.cron:
+    name: "Incremental backup"
+    user: barman
+    minute: "{{ incremental_cron_minute }}"
+    hour: "{{ incremental_cron_hour }}"
+    day: "{{ incremental_cron_day }}"
+    month: "{{ incremental_cron_month }}"
+    weekday: "{{ incremental_cron_weekday }}"
+    job: "{{ incremental_cron_job }}"
+  when: "'barman' in group_names"
+
+- name: Remove ACL when done
+  apt:
+    name: acl
+    state: absent
+  when: "'barman' in group_names"

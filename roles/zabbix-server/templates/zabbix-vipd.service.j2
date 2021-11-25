@@ -1,0 +1,6 @@
+[Unit]
+Description=Service that checks if host has a VIP attached to its interface.
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash {{ keepalived_dest }}/zabbix-daemon-vip.sh

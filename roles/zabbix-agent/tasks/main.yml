@@ -1,0 +1,26 @@
+- name: Install zabbix-agent repo
+  apt:
+    deb: "{{ zabbix_deb }}"
+
+- name: Update repo
+  apt:
+    update_cache: yes
+
+- name: Install Zabbix-Agent v5.0.16
+  package:
+    name: zabbix-agent
+    state: present
+
+- name: Copy zabbix_agentd.conf to destination
+  template:
+    src: zabbix_agentd.conf.j2
+    dest: "{{ zabbix_agent_conf_dest }}/zabbix_agentd.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart zabbix-agent.service
+  service:
+    name: zabbix-agent
+    state: restarted
+    enabled: yes
